@@ -1,0 +1,238 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+
+}
+
+model User {
+  id                Int            @id @default(autoincrement())
+  first_name        String
+  last_name         String
+  username          String         @unique
+  password          String
+  email             String         @unique
+  dob               DateTime
+  phone             String         @unique
+  gender            String
+  blood_group       String
+  address           String
+  role              Role           @relation(fields: [role_id], references: [id])
+  role_id           Int
+  status            Boolean        @default(true)
+  registration_date DateTime       @default(now())
+  registration_time DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  announcements     Announcement[]
+  appointments      Appointment[]  @relation(name: "staff")
+
+  Appointment Appointment[]
+  diagnosis   Diagnosis[]   @relation(name: "diagnosis_staff")
+
+  Diagnosis Diagnosis[]
+
+  Department   StaffsOnDepartments[]
+  Drug         Drug[]
+  prescription Prescription[]        @relation(name: "prescription_staff")
+  Prescription Prescription[]
+  test         Test[]                @relation(name: "test_staff")
+  Test         Test[]
+  Schedule     Schedule[]
+}
+
+model Announcement {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String?
+  date         DateTime
+  announcer    User     @relation(fields: [announcer_id], references: [id])
+  announcer_id Int
+  type         String
+  status       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+}
+
+model Appointment {
+  id Int @id @default(autoincrement())
+
+  appointment_date DateTime
+  schedule_date    DateTime
+  time             String
+  visited_early    Boolean
+  appointment_show Boolean
+  User             User?    @relation(fields: [staff_id], references: [id], name: "staff")
+  staff_id         Int?
+  Patient          User?    @relation(fields: [patient_id], references: [id])
+  patient_id       Int?
+  status           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Department {
+  id          Int                   @id @default(autoincrement())
+  name        String                @unique
+  description String?
+  status      Boolean               @default(true)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  staffs      StaffsOnDepartments[]
+}
+
+model StaffsOnDepartments {
+  id            Int        @id @default(autoincrement())
+  User          User       @relation(fields: [staff_id], references: [id])
+  staff_id      Int
+  Department    Department @relation(fields: [department_id], references: [id])
+  department_id Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+
+}
+
+model Diagnosis {
+  id                 Int    @id @default(autoincrement())
+  User               User   @relation(fields: [staff_id], references: [id], name: "diagnosis_staff")
+  staff_id           Int
+  Patient            User   @relation(fields: [patient_id], references: [id])
+  patient_id         Int
+  diagnosis_symptoms String
+  diagnosis_advice   String
+  diagnosed_disease  String
+
+  diagnosis_date DateTime       @default(now())
+  status         Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  Prescription   Prescription[]
+}
+
+model Drug {
+  id           Int            @id @default(autoincrement())
+  trade_name   String?
+  generic_name String
+  User         User           @relation(fields: [staff_id], references: [id])
+  staff_id     Int
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  Prescription Prescription[]
+}
+
+model Prescription {
+  id                       Int       @id @default(autoincrement())
+  User                     User      @relation(fields: [staff_id], references: [id], name: "prescription_staff")
+  staff_id                 Int
+  Patient                  User      @relation(fields: [patient_id], references: [id])
+  patient_id               Int
+  Drug                     Drug?     @relation(fields: [drug_id], references: [id])
+  drug_id                  Int?
+  Diagnosis                Diagnosis @relation(fields: [diagnosis_id], references: [id])
+  diagnosis_id             Int
+  advice                   String?
+  strength                 String?
+  dose                     String?
+  dose_unit                String?
+  frequency                Int?
+  start_date               DateTime?
+  end_date                 DateTime?
+  haematology_test_advice  Boolean   @default(false)
+  serelogy_test_advice     Boolean   @default(false)
+  biochemistry_test_advice Boolean   @default(false)
+  status                   Boolean   @default(true)
+  createdAt                DateTime  @default(now())
+  updateAt                 DateTime  @updatedAt
+}
+
+model Schedule {
+  id         Int      @id @default(autoincrement())
+  User       User     @relation(fields: [staff_id], references: [id])
+  staff_id   Int
+  weekday    Int
+  start_time DateTime
+  end_time   DateTime
+  status     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updateAt   DateTime @updatedAt
+
+}
+
+model Test {
+  id                 Int               @id @default(autoincrement())
+  User               User?             @relation(fields: [staff_id], references: [id], name: "test_staff")
+  staff_id           Int?
+  Patient            User?             @relation(fields: [patient_id], references: [id])
+  patient_id         Int?
+  HaematologyTest    HaematologyTest?  @relation(fields: [haematologyTestId], references: [id])
+  haematologyTestId  Int?
+  SerologyTest       SerologyTest?     @relation(fields: [serologyTestId], references: [id])
+  serologyTestId     Int?
+  BiochemistryTest   BiochemistryTest? @relation(fields: [biochemistryTestId], references: [id])
+  biochemistryTestId Int?
+  test_date          DateTime
+  test_time          DateTime
+  status             Boolean           @default(true)
+  createdAt          DateTime          @default(now())
+  updateAt           DateTime          @updatedAt
+
+
+}
+
+model HaematologyTest {
+  id          Int      @id @default(autoincrement())
+  wbc         Float
+  neutrophils Float
+  lymphocytes Float
+  monocytes   Float
+  eosinophils Float
+  basophils   Float
+  esr         Float
+  haemoglobin Float
+  createdAt   DateTime @default(now())
+  updateAt    DateTime @updatedAt
+  Test        Test[]
+}
+
+model SerologyTest {
+  id    Int   @id @default(autoincrement())
+  vdrl  Float
+  hiv12 Float
+  hbsag Float
+  tpha  Float
+  hcv   Float
+
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+  Test      Test[]
+}
+
+model BiochemistryTest {
+  id               Int    @id @default(autoincrement())
+  blood_glucose_F  Float?
+  blood_glucose_R  Float?
+  blood_glucose_pp Float?
+  blood_urea       Float?
+  uric_acid        Float?
+
+
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+  Test      Test[]
+}
